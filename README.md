@@ -108,6 +108,29 @@ export const DATE_CONFIG = {
 
 Modify these settings to match your desired timezone and locale. The default configuration is set to Brazilian timezone (America/Sao_Paulo) and Brazilian Portuguese locale (pt-BR).
 
+### Use an specific calendar
+
+You can use an specific calendar by setting the `CALENDAR_ID` on the `.env` file.
+
+```bash
+CALENDAR_ID=your_calendar_id_here@group.calendar.google.com
+```
+
+### How to create a new calendar?
+
+1. Go to your [Google Calendar](https://calendar.google.com/calendar)
+2. Click on the "Create new calendar" button on "Other calendars" 
+3. Name your new calendar (Suggestion: Name it as "Alexo")
+4. Click on "Create calendar"
+
+### How to get the calendar id?
+
+1. Go to your [Google Calendar](https://calendar.google.com/calendar)
+3. Click on the three dots icon on the side of the calendar you want to use
+4. Click on "Settings and sharing"
+5. Scroll down to "Integrate calendar"
+6. Copy the "Calendar ID"
+
 ## API Usage
 
 ### Basic Example
