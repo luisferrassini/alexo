@@ -22,12 +22,18 @@ A powerful calendar management library for Deno that simplifies working with cal
 
 ## Setup
 
-1. Run the initial setup script:
+1. Run the calendar setup script:
    ```bash
-   deno task setup
+   deno task setup-calendar
    ```
 
-2. Set up Whisper for voice recognition:
+2. Follow the instructions provided by the setup script to:
+   - Create a Google Cloud Project
+   - Enable the Google Calendar API
+   - Create OAuth 2.0 credentials
+   - Download and save your credentials file
+
+3. Set up Whisper for voice recognition:
    ```bash
    deno task setup-whisper
    ```
@@ -35,12 +41,6 @@ A powerful calendar management library for Deno that simplifies working with cal
    - Clone the whisper.cpp repository
    - Build the whisper.cpp library
    - Download the base model
-
-3. Follow the instructions provided by the setup script to:
-   - Create a Google Cloud Project
-   - Enable the Google Calendar API
-   - Create OAuth 2.0 credentials
-   - Download and save your credentials file
 
 4. Set up your Gemini AI API key:
    - Create a `.env` file in the root directory
@@ -202,7 +202,9 @@ If you encounter any issues or have questions, please file an issue on the GitHu
 - [ ] Add support for other AI providers (OpenAI, Anthropic, etc)
 - [ ] Add support for other local LLMs (Llama, Mistral, etc)
 - [ ] Add support for more voice commands (delete, update events)
-- [ ] Add support for multiple languages in voice interface
-- [ ] Implement voice feedback for actions
-- [ ] Add support for custom wake words
-
+- [ ] Add support for more configuration options when creating or listing events
+- [ ] Fix language detection (sometimes it creates the event in English even if the user speaks Brazilian Portuguese)
+- [ ] Add support for multiple calendars
+- [ ] Deploy to a cloud service (AWS, GCP, etc) and make it available as a web service
+- [ ] Make a better UI/UX
+- [ ] Add support for mobile devices
