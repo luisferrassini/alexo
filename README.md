@@ -1,4 +1,4 @@
-# Alexo Calendar
+# Alexo - AI Voice Calendar Assistant
 
 A powerful calendar management library for Deno that simplifies working with calendar events. This library provides an easy-to-use interface for creating, deleting, and managing calendar events through both API and voice commands.
 

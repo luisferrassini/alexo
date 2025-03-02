@@ -4,11 +4,13 @@ import {
   createCalendarEvent,
   listCalendarEvents,
 } from "../services/googleCalendar.ts";
+import { determineActionFromText } from "../services/geminiApi.ts";
 
 interface VoiceResponse {
   transcription: string;
   action: string;
   event?: unknown;
+  reason?: string;
 }
 
 export async function handleVoiceRequest(request: Request): Promise<Response> {
@@ -16,47 +18,22 @@ export async function handleVoiceRequest(request: Request): Promise<Response> {
     const audioBlob = await request.blob();
     const transcription = await transcribeAudio(audioBlob);
 
+    // Let Gemini AI determine the action
+    const { action, reason } = await determineActionFromText(transcription);
+
     const response: VoiceResponse = {
       transcription,
-      action: "unknown",
+      action,
+      reason,
     };
 
-    // Simple command detection
-    const lowerText = transcription.toLowerCase();
-
-    if (
-      lowerText.includes("create") ||
-      lowerText.includes("schedule") ||
-      lowerText.includes("mark") ||
-      lowerText.includes("add") ||
-      lowerText.includes("meeting")
-    ) {
-      response.action = "create";
+    if (action === "create") {
       const eventDetails = await parseTextToEvent(transcription);
       const event = await createCalendarEvent(eventDetails);
       response.event = event;
-    } else if (
-      lowerText.includes("list") ||
-      lowerText.includes("show") ||
-      lowerText.includes("display")
-    ) {
-      response.action = "list";
+    } else if (action === "list") {
       response.event = await listCalendarEvents();
     }
-    // } else if (
-    //   lowerText.includes("deletar") ||
-    //   lowerText.includes("remover") ||
-    //   lowerText.includes("cancelar")
-    // ) {
-    //   response.action = "delete";
-    //   // Note: You'll need to extract the event ID from the transcription
-    //   // This is a simplified example
-    //   const eventId = ""; // Extract event ID from transcription
-    //   if (eventId) {
-    //     await deleteCalendarEvent(eventId);
-    //     response.event = { deleted: true, eventId };
-    //   }
-    // }
 
     return new Response(JSON.stringify(response), {
       headers: { "Content-Type": "application/json" },

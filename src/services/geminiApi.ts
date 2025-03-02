@@ -91,3 +91,63 @@ export async function parseEventWithAI(
     }
   }
 }
+
+export async function determineActionFromText(text: string): Promise<{
+  action: "create" | "list" | "unknown";
+  reason: string;
+}> {
+  const prompt = `
+    Analyze this text and determine if the user wants to:
+    1. Create/schedule a calendar event
+    2. List/show existing calendar events
+
+    If the user says he has something to do, then the action is "create".
+    If the user says he wants to see his calendar, then the action is "list".
+    If the user says he doesn't know what to do, then the action is "unknown".
+    
+    Text: "${text}"
+    
+    Return ONLY a raw JSON object with these fields:
+    - action: either "create", "list", or "unknown"
+    - reason: brief explanation of why you chose this action
+    
+    DO NOT include any markdown, code blocks, or additional text. Return ONLY the JSON object.
+  `;
+
+  const response = await fetch(`${API_URL}?key=${API_KEY}`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      contents: [
+        {
+          parts: [{ text: prompt }],
+        },
+      ],
+      generationConfig: {
+        temperature: 0.1,
+        topK: 1,
+        topP: 1,
+      },
+    }),
+  });
+
+  if (!response.ok) {
+    throw new Error(`API request failed: ${response.statusText}`);
+  }
+
+  const data = await response.json();
+
+  try {
+    const text = data.candidates[0].content.parts[0].text.trim();
+    const jsonText = text.replace(/```json\n?|\n?```/g, "").trim();
+    return JSON.parse(jsonText);
+  } catch (error) {
+    console.error(
+      "Raw API response:",
+      data.candidates[0].content.parts[0].text
+    );
+    throw new Error(`Failed to parse API response: ${error}`);
+  }
+}

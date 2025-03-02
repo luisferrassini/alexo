@@ -38,12 +38,10 @@ export async function createCalendarEvent(
         dateTime: eventDetails.endTime,
         timeZone: eventDetails.timeZone || "UTC",
       },
+      attendees: eventDetails.attendees,
+      hangoutLink: eventDetails.hangoutLink,
       reminders: {
-        useDefault: false,
-        overrides: [
-          { method: "email", minutes: 24 * 60 },
-          { method: "popup", minutes: 30 },
-        ],
+        useDefault: true,
       },
     };
 

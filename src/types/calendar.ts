@@ -5,6 +5,8 @@ export interface CalendarEventDetails {
   startTime: string;
   endTime: string;
   timeZone?: string;
+  attendees?: string[];
+  hangoutLink?: string;
 }
 
 export interface CalendarEvent extends CalendarEventDetails {
@@ -13,9 +15,9 @@ export interface CalendarEvent extends CalendarEventDetails {
 
 export interface GoogleCalendarEvent {
   id: string;
-  summary: string;
-  location: string;
-  description: string;
+  summary?: string;
+  location?: string;
+  description?: string;
   start: {
     dateTime: string;
     timeZone: string;
@@ -24,4 +26,6 @@ export interface GoogleCalendarEvent {
     dateTime: string;
     timeZone: string;
   };
+  attendees?: string[];
+  hangoutLink?: string;
 }
