@@ -126,9 +126,9 @@ async function setupCredentials() {
   const credentialsReady = await checkAndUpdateCredentials();
 
   if (credentialsReady) {
-    console.log("\n🎉 Setup complete! You can now run 'deno task start'");
+    console.log("\n🎉 Google Calendar setup complete!");
   } else {
-    console.log("\n⚠️  Setup incomplete:");
+    console.log("\n⚠️  Google Calendar setup incomplete:");
     console.log("👉 Please add the OAuth credentials file and run setup again");
   }
 }

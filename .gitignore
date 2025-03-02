@@ -2,3 +2,5 @@ credentials/
 .env
 .vscode/launch.json
 whisper.cpp/
+credentials/oauth_credentials.json
+credentials/token.json

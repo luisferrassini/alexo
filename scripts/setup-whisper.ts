@@ -39,7 +39,7 @@ async function setupWhisper() {
     );
   }
 
-  console.log("Whisper.cpp setup complete!");
+  console.log("\n🎉 Whisper.cpp setup complete!");
 }
 
 async function exists(path: string): Promise<boolean> {
