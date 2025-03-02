@@ -1,10 +1,5 @@
 import { join } from "https://deno.land/std@0.224.0/path/mod.ts";
-import {
-  startServer,
-  stopServer,
-  waitForCallback,
-  REDIRECT_URI,
-} from "./server.ts";
+import { waitForCallback, REDIRECT_URI } from "../../main.ts";
 
 const SCOPES = ["https://www.googleapis.com/auth/calendar"];
 const TOKEN_PATH = join("credentials", "token.json");
@@ -146,9 +141,6 @@ async function getNewToken(
   authUrl.searchParams.set("access_type", "offline");
   authUrl.searchParams.set("scope", SCOPES.join(" "));
 
-  // Start the local server
-  await startServer();
-
   // Open the auth URL in the default browser
   const openCommand =
     Deno.build.os === "windows"
@@ -171,47 +163,37 @@ async function getNewToken(
   // Wait for the callback
   const callback = await waitForCallback();
 
-  // Move server stop after token exchange
-  try {
-    if (callback.error) {
-      throw new Error(`Authorization failed: ${callback.error}`);
-    }
-
-    if (!callback.code) {
-      throw new Error("No authorization code received");
-    }
-
-    const response = await fetch("https://oauth2.googleapis.com/token", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/x-www-form-urlencoded",
-      },
-      body: new URLSearchParams({
-        code: callback.code,
-        client_id: clientId,
-        client_secret: clientSecret,
-        redirect_uri: REDIRECT_URI,
-        grant_type: "authorization_code",
-      }),
-    });
-
-    if (!response.ok) {
-      throw new Error(`Token request failed: ${await response.text()}`);
-    }
-
-    const token = (await response.json()) as Token;
-    token.expiry_date = Date.now() + (token.expires_in || 3600) * 1000;
-    await saveToken(token);
-
-    // Stop the server after everything is done
-    await stopServer();
-
-    return token;
-  } catch (error) {
-    // Make sure to stop the server even if there's an error
-    await stopServer();
-    throw error;
+  if (callback.error) {
+    throw new Error(`Authorization failed: ${callback.error}`);
   }
+
+  if (!callback.code) {
+    throw new Error("No authorization code received");
+  }
+
+  const response = await fetch("https://oauth2.googleapis.com/token", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/x-www-form-urlencoded",
+    },
+    body: new URLSearchParams({
+      code: callback.code,
+      client_id: clientId,
+      client_secret: clientSecret,
+      redirect_uri: REDIRECT_URI,
+      grant_type: "authorization_code",
+    }),
+  });
+
+  if (!response.ok) {
+    throw new Error(`Token request failed: ${await response.text()}`);
+  }
+
+  const token = (await response.json()) as Token;
+  token.expiry_date = Date.now() + (token.expires_in || 3600) * 1000;
+  await saveToken(token);
+
+  return token;
 }
 
 async function refreshToken(
