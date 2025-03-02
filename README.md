@@ -4,16 +4,18 @@ A powerful calendar management library for Deno that simplifies working with cal
 
 ## Features
 
-- Create calendar events with natural language processing
+- Create calendar events with natural language processing using Google's Gemini AI
 - List calendar events
 - Delete calendar events
 - OAuth2 authentication support
 - TypeScript support
+- Configurable timezone and locale settings
 
 ## Prerequisites
 
 - [Deno](https://deno.land/) installed on your system
 - Google Calendar API credentials
+- Google Gemini AI API key
 
 ## Authentication Setup
 
@@ -28,7 +30,12 @@ A powerful calendar management library for Deno that simplifies working with cal
    - Create OAuth 2.0 credentials
    - Add http://localhost:8080/oauth2callback to the authorized redirect URIs
    - Download and save your credentials file
-3. First-time authentication:
+
+3. Set up your Gemini AI API key:
+   - Create a `.env` file in the root directory
+   - Add your Gemini API key: `GEMINI_API_KEY=your_api_key_here`
+
+4. First-time authentication:
    - When you run the application (`deno task start`), your default browser will open automatically
    - Grant permission to your application in the browser
    - The browser window will close automatically once authentication is complete
@@ -40,7 +47,7 @@ The setup script will:
 - Guide you through the Google Cloud setup process
 - Verify your credentials setup
 
-**Important:** Never commit your `oauth_credentials.json` or `token.json` or `.env` files to version control. The setup script automatically adds these files to .gitignore for your security.
+**Important:** Never commit your `oauth_credentials.json`, `token.json`, or `.env` files to version control. The setup script automatically adds these files to .gitignore for your security.
 
 ## Installation
 
@@ -52,6 +59,21 @@ The setup script will:
 
 2. Follow the [Authentication Setup](#authentication-setup) instructions above to configure your Google Calendar access.
 
+## Configuration
+
+### Date and Locale Settings
+
+The application uses a centralized configuration for timezone and locale settings, located in `src/config/dateConfig.ts`:
+
+```typescript
+export const DATE_CONFIG = {
+  timezone: "America/Sao_Paulo",
+  locale: "pt-BR",
+} as const;
+```
+
+Modify these settings to match your desired timezone and locale. The default configuration is set to Brazilian timezone (America/Sao_Paulo) and Brazilian Portuguese locale (pt-BR).
+
 ## Usage
 
 ### Basic Example
@@ -62,8 +84,8 @@ import {
   listCalendarEvents,
 } from "./mod.ts";
 
-// Create an event using natural language
-const eventText = "Meeting with team tomorrow at 2pm for 1 hour";
+// Create an event using natural language (uses the timezone and locale set in the DATE_CONFIG)
+const eventText = "Reunião com a equipe amanhã às 14h por 1 hora";
 const eventDetails = await parseTextToEvent(eventText);
 await createCalendarEvent(eventDetails);
 
@@ -75,7 +97,7 @@ console.log(events);
 ## API Reference
 
 ### `parseTextToEvent(text: string): Promise<CalendarEventDetails>`
-Converts natural language text into structured calendar event details.
+Converts natural language text into structured calendar event details using Gemini AI.
 
 ### `createCalendarEvent(details: CalendarEventDetails): Promise<void>`
 Creates a new calendar event with the specified details.
