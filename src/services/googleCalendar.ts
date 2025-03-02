@@ -23,9 +23,9 @@ export async function createCalendarEvent(
     const parsedCalendarId = parseCalendarId(calendarId);
 
     const event = {
-      summary: `${eventDetails.summary || "New Event"} - Powered by Alexo`,
+      summary: eventDetails.summary || "New Event",
       location: eventDetails.location,
-      description: `${eventDetails.description} - Powered by Alexo`,
+      description: eventDetails.description,
       start: {
         dateTime: eventDetails.startTime,
         timeZone: eventDetails.timeZone || "UTC",
