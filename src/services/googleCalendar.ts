@@ -3,14 +3,10 @@ import {
   CalendarEventDetails,
   CalendarEvent,
   GoogleCalendarEvent,
+  ListCalendarEventsOptions,
 } from "../types/calendar.ts";
 
 const GOOGLE_CALENDAR_API = "https://www.googleapis.com/calendar/v3";
-
-interface ListOptions {
-  timeMin?: string;
-  maxResults?: number;
-}
 
 interface GoogleCalendarError {
   message: string;
@@ -27,9 +23,9 @@ export async function createCalendarEvent(
     const parsedCalendarId = parseCalendarId(calendarId);
 
     const event = {
-      summary: eventDetails.summary || "New Event",
+      summary: `${eventDetails.summary || "New Event"} - Powered by Alexo`,
       location: eventDetails.location,
-      description: eventDetails.description,
+      description: `${eventDetails.description} - Powered by Alexo`,
       start: {
         dateTime: eventDetails.startTime,
         timeZone: eventDetails.timeZone || "UTC",
@@ -108,8 +104,8 @@ export async function deleteCalendarEvent(
 }
 
 export async function listCalendarEvents(
-  calendarId?: string,
-  options: ListOptions = {}
+  options: ListCalendarEventsOptions = {},
+  calendarId?: string
 ): Promise<CalendarEvent[]> {
   try {
     const auth = await authorize();
@@ -118,11 +114,15 @@ export async function listCalendarEvents(
 
     const params = new URLSearchParams({
       timeMin: options.timeMin || new Date().toISOString(),
+      timeMax:
+        options.timeMax ||
+        new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(), // Default to 1 week ahead
       maxResults: (options.maxResults || 10).toString(),
       singleEvents: "true",
       orderBy: "startTime",
     });
 
+    // Fetch events from the specified calendar
     const response = await fetch(
       `${GOOGLE_CALENDAR_API}/calendars/${parsedCalendarId}/events?${params}`,
       {
@@ -138,9 +138,38 @@ export async function listCalendarEvents(
     }
 
     const data = await response.json();
-    const events = data.items;
+    let events = data.items || [];
 
-    if (!events || events.length === 0) {
+    // If calendar is not primary, also fetch primary calendar events
+    if (parsedCalendarId !== "primary") {
+      const primaryResponse = await fetch(
+        `${GOOGLE_CALENDAR_API}/calendars/primary/events?${params}`,
+        {
+          headers: {
+            Authorization: `Bearer ${auth.access_token}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      if (!primaryResponse.ok) {
+        throw new Error(
+          `Failed to list primary events: ${await primaryResponse.text()}`
+        );
+      }
+
+      const primaryData = await primaryResponse.json();
+      const primaryEvents = primaryData.items || [];
+
+      // Merge and sort events from both calendars
+      events = [...events, ...primaryEvents].sort((a, b) => {
+        const aStart = a.start?.dateTime || a.start?.date;
+        const bStart = b.start?.dateTime || b.start?.date;
+        return new Date(aStart).getTime() - new Date(bStart).getTime();
+      });
+    }
+
+    if (events.length === 0) {
       console.log("No upcoming events found.");
       return [];
     }

@@ -1,4 +1,7 @@
-import { CalendarEventDetails } from "../types/calendar.ts";
+import {
+  CalendarEventDetails,
+  ListCalendarEventsOptions,
+} from "../types/calendar.ts";
 import { DATE_CONFIG } from "../config/dateConfig.ts";
 import "jsr:@std/dotenv/load";
 
@@ -21,7 +24,7 @@ const time = new Date().toLocaleTimeString(DATE_CONFIG.locale, {
   minute: "2-digit",
 });
 
-export async function parseEventWithAI(
+export async function parseTextToCreateEventWithAI(
   text: string
 ): Promise<CalendarEventDetails> {
   const prompt = `
@@ -92,7 +95,7 @@ export async function parseEventWithAI(
   }
 }
 
-export async function determineActionFromText(text: string): Promise<{
+export async function parseTextToDetermineActionWithAI(text: string): Promise<{
   action: "create" | "list" | "unknown";
   reason: string;
 }> {
@@ -110,6 +113,62 @@ export async function determineActionFromText(text: string): Promise<{
     Return ONLY a raw JSON object with these fields:
     - action: either "create", "list", or "unknown"
     - reason: brief explanation of why you chose this action
+    
+    DO NOT include any markdown, code blocks, or additional text. Return ONLY the JSON object.
+  `;
+
+  const response = await fetch(`${API_URL}?key=${API_KEY}`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      contents: [
+        {
+          parts: [{ text: prompt }],
+        },
+      ],
+      generationConfig: {
+        temperature: 0.1,
+        topK: 1,
+        topP: 1,
+      },
+    }),
+  });
+
+  if (!response.ok) {
+    throw new Error(`API request failed: ${response.statusText}`);
+  }
+
+  const data = await response.json();
+
+  try {
+    const text = data.candidates[0].content.parts[0].text.trim();
+    const jsonText = text.replace(/```json\n?|\n?```/g, "").trim();
+    return JSON.parse(jsonText);
+  } catch (error) {
+    console.error(
+      "Raw API response:",
+      data.candidates[0].content.parts[0].text
+    );
+    throw new Error(`Failed to parse API response: ${error}`);
+  }
+}
+
+export async function parseTextToListEventsWithAI(
+  text: string
+): Promise<ListCalendarEventsOptions> {
+  const prompt = `
+    Parse this text into list calendar events options: "${text}"
+
+    The text is in ${DATE_CONFIG.locale}.
+    Today is ${date}. Right now is ${time}.
+    The timezone is ${DATE_CONFIG.timezone}.
+    
+    Return ONLY a raw JSON object with these fields:
+    - timeMin (ISO date string, if mentioned, otherwise exclude)
+    - timeMax (ISO date string, if mentioned, otherwise exclude)
+    - maxResults (number, if mentioned, otherwise exclude)
     
     DO NOT include any markdown, code blocks, or additional text. Return ONLY the JSON object.
   `;

@@ -136,7 +136,35 @@
   </style>
 </head>
 <body>
-  <h1>Voice Calendar Assistant</h1>
+  <h1>Alexo - AI Voice Calendar Assistant</h1>
+  <details>
+    <summary>About Alexo</summary>
+    <div class="about-content">
+      <p>Alexo is an AI voice assistant that helps you manage your calendar. It can create, delete, and list calendar events.</p>
+      <p>Alexo is built with Deno, Google Gemini AI, and Whisper. It uses the Google Calendar API to manage your calendar events.</p>
+      <p>Alexo is open source and available on <a href="https://github.com/luisferrassini/alexo" target="_blank">GitHub</a>.</p>
+    </div>
+  </details>
+  <details>
+    <summary>How to use Alexo</summary>
+    <div class="about-content">
+      <p>Just click on the "Start Recording" button and say what you want to do with your calendar.
+      <p>Example: "We have a meeting tomorrow at 10am with John Doe and Jane Doe at the office"</p>
+      <p>Alexo will then process your voice and return the result.</p>
+    </div>
+  </details>
+  <details>
+    <summary>Examples</summary>
+    <div class="about-content">
+      <p>"Create an event for tomorrow at 10am with John Doe and Jane Doe at the office"</p>
+      <p>"List my events for this week"</p>
+      <p>"I have to call John Doe tomorrow at 10am"</p>
+      <p>"I have to take my medicine 2 weeks from now at 10am"</p>
+      <p>"I have to go to the doctor on the 10th of March at 10am"</p>
+      <p>"I have a meeting tomorrow at 10am"</p>
+    </div>
+  </details>
+  
   <div class="controls">
     <button id="recordButton">
       <span class="mic-icon">&#127908;</span>
@@ -155,8 +183,16 @@
 
     async function setupRecording() {
       try {
-        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-        mediaRecorder = new MediaRecorder(stream);
+        const stream = await navigator.mediaDevices.getUserMedia({ 
+          audio: {
+            echoCancellation: true,
+            noiseSuppression: true,
+            autoGainControl: true
+          }
+        });
+        mediaRecorder = new MediaRecorder(stream, {
+          mimeType: 'audio/webm'
+        });
 
         mediaRecorder.ondataavailable = (event) => {
           audioChunks.push(event.data);
@@ -170,8 +206,8 @@
           const getEventDuration = (start, end) => {
             const startTime = new Date(start);
             const endTime = new Date(end);
-            const diffHours = Math.round((endTime - startTime) / (1000 * 60 * 60));
-            const diffMinutes = Math.round((endTime - startTime) / (1000 * 60)) % 60;
+            const diffHours = Math.floor((endTime - startTime) / (1000 * 60 * 60));
+            const diffMinutes = Math.floor((endTime - startTime) / (1000 * 60)) % 60;
             
             if (diffHours === 0) {
               return `${diffMinutes}min`;
@@ -191,65 +227,64 @@
             
             // Format the response
             let eventHtml = '';
-            if (data.event) {
-              if (Array.isArray(data.event)) {
-                if (data.event.length === 0) {
-                  eventHtml = '<p>No upcoming events found</p>';
-                } else {
-                  eventHtml = data.event.map(event => `
-                    <div class="event-card">
-                      <div class="event-time">
-                        <span><span class="event-icon">&#128197;</span>${new Date(event.start.dateTime).toLocaleString()}</span>
-                        <span class="event-duration">
-                          <span class="event-icon">&#128336;</span>${getEventDuration(event.start.dateTime, event.end.dateTime)}
-                        </span>
-                      </div>
-                      <div class="event-summary"><a href="${event.htmlLink}" target="_blank">${event.summary}</a></div>
-                      ${event.description ? 
-                        `<div class="event-description">${event.description}</div>` : 
-                        ''}
-                      <div class="event-metadata">
-                        ${event.location ? 
-                          `<div class="event-location"><span class="event-icon">&#128204;</span>${event.location}</div>` : 
-                          ''}
-                        ${event.attendees ? 
-                          `<div><span class="event-icon">&#128483;</span>${event.attendees.length} attendee${event.attendees.length !== 1 ? 's' : ''}</div>` : 
-                          ''}
-                        ${event.hangoutLink ? 
-                          `<div><span class="event-icon">&#128421;</span><a href="${event.hangoutLink}" target="_blank">Video call</a></div>` : 
-                          ''}
-                      </div>
-                    </div>
-                  `).join('');
-                }
+            if (data.events) {
+              // Handle list of events
+              if (data.events.length === 0) {
+                eventHtml = '<p>No upcoming events found</p>';
               } else {
-                // Single event response (for create/delete actions)
-                eventHtml = `
+                eventHtml = data.events.map(event => `
                   <div class="event-card">
                     <div class="event-time">
-                      <span><span class="event-icon">&#128197;</span>${new Date(data.event.start.dateTime).toLocaleString()}</span>
+                      <span><span class="event-icon">&#128197;</span>${new Date(event.start.dateTime).toLocaleString()}</span>
                       <span class="event-duration">
-                        <span class="event-icon">&#128336;</span>${getEventDuration(data.event.start.dateTime, data.event.end.dateTime)}
+                        <span class="event-icon">&#128336;</span>${getEventDuration(event.start.dateTime, event.end.dateTime)}
                       </span>
                     </div>
-                    <div class="event-summary"><a href="${data.event.htmlLink}" target="_blank">${data.event.summary}</a></div>
-                    ${data.event.description ? 
-                      `<div class="event-description">${data.event.description}</div>` : 
+                    <div class="event-summary"><a href="${event.htmlLink}" target="_blank">${event.summary}</a></div>
+                    ${event.description ? 
+                      `<div class="event-description">${event.description}</div>` : 
                       ''}
                     <div class="event-metadata">
-                      ${data.event.location ? 
-                        `<div class="event-location"><span class="event-icon">&#128204;</span>${data.event.location}</div>` : 
+                      ${event.location ? 
+                        `<div class="event-location"><span class="event-icon">&#128204;</span>${event.location}</div>` : 
                         ''}
-                      ${data.event.attendees ? 
-                        `<div><span class="event-icon">&#128483;</span>${data.event.attendees.length} attendee${data.event.attendees.length !== 1 ? 's' : ''}</div>` : 
+                      ${event.attendees ? 
+                        `<div><span class="event-icon">&#128483;</span>${event.attendees.length} attendee${event.attendees.length !== 1 ? 's' : ''}</div>` : 
                         ''}
-                      ${data.event.hangoutLink ? 
-                        `<div><span class="event-icon">&#128421;</span><a href="${data.event.hangoutLink}" target="_blank">Video call</a></div>` : 
+                      ${event.hangoutLink ? 
+                        `<div><span class="event-icon">&#128421;</span><a href="${event.hangoutLink}" target="_blank">Video call</a></div>` : 
                         ''}
                     </div>
                   </div>
-                `;
+                `).join('');
               }
+            } else if (data.event) {
+              // Handle single event (create action)
+              eventHtml = `
+                <div class="event-card">
+                  <div class="event-time">
+                    <span><span class="event-icon">&#128197;</span>${new Date(data.event.start.dateTime).toLocaleString()}</span>
+                    <span class="event-duration">
+                      <span class="event-icon">&#128336;</span>${getEventDuration(data.event.start.dateTime, data.event.end.dateTime)}
+                    </span>
+                  </div>
+                  <div class="event-summary"><a href="${data.event.htmlLink}" target="_blank">${data.event.summary}</a></div>
+                  ${data.event.description ? 
+                    `<div class="event-description">${data.event.description}</div>` : 
+                    ''}
+                  <div class="event-metadata">
+                    ${data.event.location ? 
+                      `<div class="event-location"><span class="event-icon">&#128204;</span>${data.event.location}</div>` : 
+                      ''}
+                    ${data.event.attendees ? 
+                      `<div><span class="event-icon">&#128483;</span>${data.event.attendees.length} attendee${data.event.attendees.length !== 1 ? 's' : ''}</div>` : 
+                      ''}
+                    ${data.event.hangoutLink ? 
+                      `<div><span class="event-icon">&#128421;</span><a href="${data.event.hangoutLink}" target="_blank">Video call</a></div>` : 
+                      ''}
+                  </div>
+                </div>
+              `;
             }
 
             result.innerHTML = `
@@ -260,6 +295,7 @@
                 <p>
                   <strong>Action:</strong> 
                   <span class="action-label">${data.action}</span>
+                  ${data.actionDetails ? `<br><small>${data.actionDetails}</small>` : ''}
                 </p>
                 ${eventHtml}
               </div>
@@ -275,7 +311,14 @@
           status.textContent = '';
         };
       } catch (error) {
-        status.textContent = `Error accessing microphone: ${error.message}`;
+        if (error.name === 'NotAllowedError') {
+          status.textContent = 'Please allow microphone access to use this feature';
+        } else if (error.name === 'NotFoundError') {
+          status.textContent = 'No microphone found on your device';
+        } else {
+          status.textContent = `Error accessing microphone: ${error.message}`;
+        }
+        recordButton.disabled = true;
       }
     }
 
@@ -293,7 +336,13 @@
       }
     });
 
-    setupRecording();
+    // Add check for getUserMedia support
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      status.textContent = 'Voice recording is not supported in your browser';
+      recordButton.disabled = true;
+    } else {
+      setupRecording();
+    }
   </script>
 </body>
 </html> 

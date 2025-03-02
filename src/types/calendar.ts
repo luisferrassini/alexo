@@ -29,3 +29,9 @@ export interface GoogleCalendarEvent {
   attendees?: string[];
   hangoutLink?: string;
 }
+
+export interface ListCalendarEventsOptions {
+  timeMin?: string;
+  timeMax?: string;
+  maxResults?: number;
+}

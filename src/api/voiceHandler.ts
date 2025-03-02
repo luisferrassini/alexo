@@ -1,16 +1,21 @@
 import { transcribeAudio } from "../services/whisper.ts";
-import { parseTextToEvent } from "../utils/eventParser.ts";
+import {
+  parseTextToCreateEvent,
+  parseTextToListEvents,
+} from "../utils/eventParser.ts";
 import {
   createCalendarEvent,
   listCalendarEvents,
 } from "../services/googleCalendar.ts";
-import { determineActionFromText } from "../services/geminiApi.ts";
+import { parseTextToDetermineActionWithAI } from "../services/geminiApi.ts";
 
 interface VoiceResponse {
   transcription: string;
   action: string;
   event?: unknown;
+  events?: unknown;
   reason?: string;
+  actionDetails?: string;
 }
 
 export async function handleVoiceRequest(request: Request): Promise<Response> {
@@ -19,7 +24,9 @@ export async function handleVoiceRequest(request: Request): Promise<Response> {
     const transcription = await transcribeAudio(audioBlob);
 
     // Let Gemini AI determine the action
-    const { action, reason } = await determineActionFromText(transcription);
+    const { action, reason } = await parseTextToDetermineActionWithAI(
+      transcription
+    );
 
     const response: VoiceResponse = {
       transcription,
@@ -28,11 +35,26 @@ export async function handleVoiceRequest(request: Request): Promise<Response> {
     };
 
     if (action === "create") {
-      const eventDetails = await parseTextToEvent(transcription);
-      const event = await createCalendarEvent(eventDetails);
-      response.event = event;
+      const eventDetails = await parseTextToCreateEvent(transcription);
+      response.event = await createCalendarEvent(eventDetails);
+      response.actionDetails = `Creating a new calendar event: "${eventDetails.summary}"`;
     } else if (action === "list") {
-      response.event = await listCalendarEvents();
+      const options = await parseTextToListEvents(transcription);
+      response.events = await listCalendarEvents(options);
+
+      let timeRange = "upcoming events";
+      if (options.timeMin && options.timeMax) {
+        timeRange = `events from ${new Date(
+          options.timeMin
+        ).toLocaleDateString()} to ${new Date(
+          options.timeMax
+        ).toLocaleDateString()}`;
+      }
+
+      const maxResults = options.maxResults
+        ? ` (limited to ${options.maxResults} events)`
+        : "";
+      response.actionDetails = `Listing ${timeRange}${maxResults}`;
     }
 
     return new Response(JSON.stringify(response), {
