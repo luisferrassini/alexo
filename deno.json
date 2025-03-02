@@ -1,9 +1,10 @@
 {
   "tasks": {
-    "dev": "deno run --watch main.ts",
-    "start": "deno run --allow-read --allow-write --allow-net --allow-run --allow-env main.ts",
+    "dev": "deno run --watch src/server/main.ts",
+    "start": "deno run --allow-read --allow-write --allow-net --allow-run --allow-env --allow-ffi src/server/main.ts",
     "test": "deno test --allow-read --allow-write --allow-net",
-    "setup": "deno run --allow-read --allow-write scripts/setup.ts"
+    "setup": "deno run --allow-read --allow-write scripts/setup.ts",
+    "setup-whisper": "deno run --allow-read --allow-write --allow-run --allow-env scripts/setup-whisper.ts"
   },
   "imports": {
     "@std/assert": "jsr:@std/assert"

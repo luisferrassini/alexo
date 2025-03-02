@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Voice Calendar Assistant</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    .controls {
+      text-align: center;
+      margin: 20px 0;
+    }
+    #recordButton {
+      padding: 15px 30px;
+      font-size: 18px;
+      cursor: pointer;
+    }
+    #status, #result {
+      margin: 20px 0;
+    }
+    .recording {
+      background-color: #ff4444;
+      color: white;
+    }
+    .result-card {
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      padding: 20px;
+      margin: 20px 0;
+      background-color: #f9f9f9;
+    }
+    .event-card {
+      background: white;
+      border: 1px solid #eee;
+      border-radius: 6px;
+      padding: 15px;
+      margin: 10px 0;
+    }
+    .event-time {
+      color: #666;
+      font-size: 0.9em;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .event-icon {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 20px;
+      height: 20px;
+      font-size: 1.1em;
+    }
+    .event-duration {
+      background: #f0f0f0;
+      padding: 2px 8px;
+      border-radius: 12px;
+      font-size: 0.8em;
+    }
+    .event-description {
+      color: #555;
+      margin: 8px 0;
+      font-size: 0.95em;
+      white-space: pre-wrap;
+    }
+    .event-metadata {
+      display: flex;
+      gap: 15px;
+      margin-top: 8px;
+      font-size: 0.9em;
+      color: #666;
+    }
+    .event-metadata > div {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .event-summary {
+      font-weight: bold;
+      margin: 5px 0;
+    }
+    .event-location {
+      color: #0066cc;
+    }
+    .transcription-box {
+      background: #e8f4ff;
+      padding: 15px;
+      border-radius: 6px;
+      margin: 10px 0;
+    }
+    .action-label {
+      display: inline-block;
+      padding: 5px 10px;
+      border-radius: 4px;
+      background: #4CAF50;
+      color: white;
+      font-size: 0.9em;
+    }
+  </style>
+</head>
+<body>
+  <h1>Voice Calendar Assistant</h1>
+  <div class="controls">
+    <button id="recordButton">Start Recording</button>
+  </div>
+  <div id="status"></div>
+  <div id="result"></div>
+
+  <script>
+    let mediaRecorder;
+    let audioChunks = [];
+    const recordButton = document.getElementById('recordButton');
+    const status = document.getElementById('status');
+    const result = document.getElementById('result');
+
+    async function setupRecording() {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        mediaRecorder = new MediaRecorder(stream);
+
+        mediaRecorder.ondataavailable = (event) => {
+          audioChunks.push(event.data);
+        };
+
+        mediaRecorder.onstop = async () => {
+          const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+          status.textContent = 'Processing audio...';
+          
+          // Helper function to calculate duration
+          const getEventDuration = (start, end) => {
+            const startTime = new Date(start);
+            const endTime = new Date(end);
+            const diffHours = Math.round((endTime - startTime) / (1000 * 60 * 60));
+            const diffMinutes = Math.round((endTime - startTime) / (1000 * 60)) % 60;
+            
+            if (diffHours === 0) {
+              return `${diffMinutes}min`;
+            }
+            return diffMinutes === 0 ? 
+              `${diffHours}h` : 
+              `${diffHours}h ${diffMinutes}min`;
+          };
+
+          try {
+            const response = await fetch('/api/process-voice', {
+              method: 'POST',
+              body: audioBlob
+            });
+            
+            const data = await response.json();
+            
+            // Format the response
+            let eventHtml = '';
+            if (data.event) {
+              if (Array.isArray(data.event)) {
+                if (data.event.length === 0) {
+                  eventHtml = '<p>No upcoming events found</p>';
+                } else {
+                  eventHtml = data.event.map(event => `
+                    <div class="event-card">
+                      <div class="event-time">
+                        <span><span class="event-icon">📅</span>${new Date(event.start.dateTime).toLocaleString()}</span>
+                        <span class="event-duration">
+                          <span class="event-icon">⌚</span>${getEventDuration(event.start.dateTime, event.end.dateTime)}
+                        </span>
+                      </div>
+                      <div class="event-summary"><a href="${event.htmlLink}" target="_blank">${event.summary}</a></div>
+                      ${event.description ? 
+                        `<div class="event-description">${event.description}</div>` : 
+                        ''}
+                      <div class="event-metadata">
+                        ${event.location ? 
+                          `<div class="event-location"><span class="event-icon">📌</span>${event.location}</div>` : 
+                          ''}
+                        ${event.attendees ? 
+                          `<div><span class="event-icon">👤</span>${event.attendees.length} attendee${event.attendees.length !== 1 ? 's' : ''}</div>` : 
+                          ''}
+                        ${event.hangoutLink ? 
+                          `<div><span class="event-icon">💻</span><a href="${event.hangoutLink}" target="_blank">Video call</a></div>` : 
+                          ''}
+                      </div>
+                    </div>
+                  `).join('');
+                }
+              } else {
+                // Single event response (for create/delete actions)
+                eventHtml = `
+                  <div class="event-card">
+                    <div class="event-time">
+                      <span><span class="event-icon">📅</span>${new Date(data.event.start.dateTime).toLocaleString()}</span>
+                      <span class="event-duration">
+                        <span class="event-icon">⌚</span>${getEventDuration(data.event.start.dateTime, data.event.end.dateTime)}
+                      </span>
+                    </div>
+                    <div class="event-summary"><a href="${data.event.htmlLink}" target="_blank">${data.event.summary}</a></div>
+                    ${data.event.description ? 
+                      `<div class="event-description">${data.event.description}</div>` : 
+                      ''}
+                    <div class="event-metadata">
+                      ${data.event.location ? 
+                        `<div class="event-location"><span class="event-icon">📌</span>${data.event.location}</div>` : 
+                        ''}
+                      ${data.event.attendees ? 
+                        `<div><span class="event-icon">👤</span>${data.event.attendees.length} attendee${data.event.attendees.length !== 1 ? 's' : ''}</div>` : 
+                        ''}
+                      ${data.event.hangoutLink ? 
+                        `<div><span class="event-icon">💻</span><a href="${data.event.hangoutLink}" target="_blank">Video call</a></div>` : 
+                        ''}
+                    </div>
+                  </div>
+                `;
+              }
+            }
+
+            result.innerHTML = `
+              <div class="result-card">
+                <div class="transcription-box">
+                  <strong>You said:</strong> ${data.transcription}
+                </div>
+                <p>
+                  <strong>Action:</strong> 
+                  <span class="action-label">${data.action}</span>
+                </p>
+                ${eventHtml}
+              </div>
+            `;
+          } catch (error) {
+            result.innerHTML = `
+              <div class="result-card" style="border-color: #ff4444;">
+                <strong>Error:</strong> ${error.message}
+              </div>
+            `;
+          }
+          
+          status.textContent = '';
+        };
+      } catch (error) {
+        status.textContent = `Error accessing microphone: ${error.message}`;
+      }
+    }
+
+    recordButton.addEventListener('click', () => {
+      if (mediaRecorder?.state === 'recording') {
+        mediaRecorder.stop();
+        recordButton.textContent = 'Start Recording';
+        recordButton.classList.remove('recording');
+        audioChunks = [];
+      } else {
+        mediaRecorder.start();
+        recordButton.textContent = 'Stop Recording';
+        recordButton.classList.add('recording');
+        result.textContent = '';
+      }
+    });
+
+    setupRecording();
+  </script>
+</body>
+</html> 
