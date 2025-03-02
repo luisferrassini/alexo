@@ -62,6 +62,8 @@ The setup scripts will:
 
 **Important:** Never commit your `oauth_credentials.json`, `token.json`, or `.env` files to version control. The setup script automatically adds these files to .gitignore for your security.
 
+**Extra note:** You might need to add your google account email to the test users list in the Google Calendar API console.
+
 ## Installation
 
 1. Clone the repository:
