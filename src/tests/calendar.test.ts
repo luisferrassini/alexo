@@ -7,8 +7,6 @@ import {
   listCalendarEvents,
 } from "../services/googleCalendar.ts";
 
-const calendarId = Deno.env.get("CALENDAR_ID") || "primary";
-
 Deno.test("should handle manual event creation and deletion", async () => {
   const eventDetails: CalendarEventDetails = {
     summary: "Team Meeting",
@@ -22,23 +20,23 @@ Deno.test("should handle manual event creation and deletion", async () => {
   try {
     // List current events
     console.log("\nCurrent events:");
-    await listCalendarEvents(calendarId);
+    await listCalendarEvents();
 
     // Create an event
-    const event = await createCalendarEvent(eventDetails, calendarId);
+    const event = await createCalendarEvent(eventDetails);
     assertExists(event.id);
     console.log("\nCreated event ID:", event.id);
 
     // List events again to see the new one
     console.log("\nAfter creating:");
-    await listCalendarEvents(calendarId);
+    await listCalendarEvents();
 
     // Delete the event
-    await deleteCalendarEvent(event.id, calendarId);
+    await deleteCalendarEvent(event.id);
 
     // List events one more time to confirm deletion
     console.log("\nAfter deleting:");
-    await listCalendarEvents(calendarId);
+    await listCalendarEvents();
   } catch (error) {
     console.error(
       "Test failed:",

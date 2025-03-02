@@ -19,10 +19,12 @@ interface GoogleCalendarError {
 
 export async function createCalendarEvent(
   eventDetails: CalendarEventDetails,
-  calendarId: string = "primary"
+  calendarId?: string
 ): Promise<CalendarEvent> {
   try {
     const auth = await authorize();
+
+    const parsedCalendarId = parseCalendarId(calendarId);
 
     const event = {
       summary: eventDetails.summary || "New Event",
@@ -46,7 +48,7 @@ export async function createCalendarEvent(
     };
 
     const response = await fetch(
-      `${GOOGLE_CALENDAR_API}/calendars/${calendarId}/events`,
+      `${GOOGLE_CALENDAR_API}/calendars/${parsedCalendarId}/events`,
       {
         method: "POST",
         headers: {
@@ -75,13 +77,15 @@ export async function createCalendarEvent(
 
 export async function deleteCalendarEvent(
   eventId: string,
-  calendarId: string = "primary"
+  calendarId?: string
 ): Promise<void> {
   try {
     const auth = await authorize();
 
+    const parsedCalendarId = parseCalendarId(calendarId);
+
     const response = await fetch(
-      `${GOOGLE_CALENDAR_API}/calendars/${calendarId}/events/${eventId}`,
+      `${GOOGLE_CALENDAR_API}/calendars/${parsedCalendarId}/events/${eventId}`,
       {
         method: "DELETE",
         headers: {
@@ -106,11 +110,13 @@ export async function deleteCalendarEvent(
 }
 
 export async function listCalendarEvents(
-  calendarId: string = "primary",
+  calendarId?: string,
   options: ListOptions = {}
 ): Promise<CalendarEvent[]> {
   try {
     const auth = await authorize();
+
+    const parsedCalendarId = parseCalendarId(calendarId);
 
     const params = new URLSearchParams({
       timeMin: options.timeMin || new Date().toISOString(),
@@ -120,7 +126,7 @@ export async function listCalendarEvents(
     });
 
     const response = await fetch(
-      `${GOOGLE_CALENDAR_API}/calendars/${calendarId}/events?${params}`,
+      `${GOOGLE_CALENDAR_API}/calendars/${parsedCalendarId}/events?${params}`,
       {
         headers: {
           Authorization: `Bearer ${auth.access_token}`,
@@ -154,3 +160,7 @@ export async function listCalendarEvents(
     throw new Error(`Failed to list calendar events: ${calendarError.message}`);
   }
 }
+
+const parseCalendarId = function (calendarId?: string) {
+  return calendarId || Deno.env.get("CALENDAR_ID") || "primary";
+};
