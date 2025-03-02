@@ -40,7 +40,6 @@ A powerful calendar management library for Deno that simplifies working with cal
    - Create a Google Cloud Project
    - Enable the Google Calendar API
    - Create OAuth 2.0 credentials
-   - Add http://localhost:8080/oauth2callback to the authorized redirect URIs
    - Download and save your credentials file
 
 4. Set up your Gemini AI API key:
