@@ -37,7 +37,7 @@ export async function parseTextToCreateEventWithAI(
     Return ONLY a raw JSON object with these fields:
     - summary (title of the event)
     - description (any additional details or, if there's no additional details, just return the full text)
-    - startTime (in ISO format)
+    - startTime (in ISO format, if not specified, assume 1 day from now on a round hour)
     - endTime (in ISO format, if not specified, assume 1 hour duration)
     - location (if mentioned, otherwise exclude this field)
     
