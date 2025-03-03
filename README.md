@@ -1,6 +1,6 @@
 # Alexo - AI Voice Calendar Assistant
 
-A powerful calendar management library for Deno that simplifies working with calendar events. This library provides an easy-to-use interface for creating, deleting, and managing calendar events through both API and voice commands.
+A powerful calendar management library for Deno that simplifies working with calendar events. This library provides an easy-to-use interface for creating, deleting, and managing calendar events through voice commands.
 
 ## Features
 
@@ -116,14 +116,14 @@ You can use an specific calendar by setting the `CALENDAR_ID` on the `.env` file
 CALENDAR_ID=your_calendar_id_here@group.calendar.google.com
 ```
 
-### How to create a new calendar?
+#### How to create a new calendar?
 
 1. Go to your [Google Calendar](https://calendar.google.com/calendar)
 2. Click on the "Create new calendar" button on "Other calendars" 
 3. Name your new calendar (Suggestion: Name it as "Alexo")
 4. Click on "Create calendar"
 
-### How to get the calendar id?
+#### How to get the calendar id?
 
 1. Go to your [Google Calendar](https://calendar.google.com/calendar)
 3. Click on the three dots icon on the side of the calendar you want to use
@@ -131,42 +131,27 @@ CALENDAR_ID=your_calendar_id_here@group.calendar.google.com
 5. Scroll down to "Integrate calendar"
 6. Copy the "Calendar ID"
 
-## API Usage
+### Keyboard Shortcuts
 
-### Basic Example
-```typescript
-import {
-  createCalendarEvent,
-  parseTextToEvent,
-  listCalendarEvents,
-} from "./mod.ts";
+To quickly access the application, you can set up keyboard shortcuts based on your operating system:
 
-// Create an event using natural language
-const eventText = "Reunião com a equipe amanhã às 14h por 1 hora";
-const eventDetails = await parseTextToEvent(eventText);
-await createCalendarEvent(eventDetails);
+#### Linux
+1. Open your system's keyboard settings
+2. Create a new custom shortcut
+3. Set the command to: `xdg-open http://localhost:8000/`
+4. Assign your preferred key combination (e.g. Super+A)
 
-// List all events
-const events = await listCalendarEvents();
-console.log(events);
-```
+#### macOS
+1. Open System Preferences > Keyboard > Shortcuts
+2. Click "App Shortcuts" and add a new shortcut
+3. Set the URL to: `http://localhost:8000/`
+4. Assign your preferred key combination (e.g. ⌘+⇧+A)
 
-## API Reference
-
-### `parseTextToEvent(text: string): Promise<CalendarEventDetails>`
-Converts natural language text into structured calendar event details using Gemini AI.
-
-### `createCalendarEvent(details: CalendarEventDetails): Promise<void>`
-Creates a new calendar event with the specified details.
-
-### `deleteCalendarEvent(eventId: string): Promise<void>`
-Deletes a calendar event by its ID.
-
-### `listCalendarEvents(): Promise<CalendarEventDetails[]>`
-Retrieves a list of calendar events.
-
-### `transcribeAudio(audioBlob: Blob): Promise<string>`
-Converts audio to text using Whisper.
+#### Windows
+1. Create a new shortcut on your desktop
+2. Set the target to: `start http://localhost:8000/`
+3. Right-click the shortcut and select Properties
+4. In the "Shortcut" tab, click in "Shortcut key" and press your desired key combination
 
 ## Development
 
