@@ -1,4 +1,3 @@
-import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { handleVoiceRequest } from "./src/api/voiceHandler.ts";
 import "jsr:@std/dotenv/load";
 
@@ -23,7 +22,7 @@ async function handleRequest(req: Request): Promise<Response> {
   const url = new URL(req.url);
   const pathname = url.pathname;
 
-  console.log("Incoming request:", {
+  console.debug("Incoming request:", {
     pathname,
     method: req.method,
     staticDir: STATIC_DIR,
@@ -107,12 +106,6 @@ async function handleRequest(req: Request): Promise<Response> {
           ? `${STATIC_DIR}/index.html`
           : `${STATIC_DIR}${pathname}`;
 
-      console.log("Attempting to serve static file:", {
-        requestPath: pathname,
-        fullFilePath: filePath,
-        cwd: Deno.cwd(),
-      });
-
       const content = await Deno.readFile(filePath);
       const contentType = filePath.endsWith(".html")
         ? "text/html"
@@ -122,7 +115,6 @@ async function handleRequest(req: Request): Promise<Response> {
         ? "text/css"
         : "application/octet-stream";
 
-      console.log("Successfully serving file:", filePath);
       return new Response(content, {
         headers: { "Content-Type": contentType },
       });
@@ -149,6 +141,7 @@ async function handleRequest(req: Request): Promise<Response> {
   });
 }
 
+// deno-lint-ignore require-await
 export async function waitForCallback(): Promise<AuthCallback> {
   if (authCallback) {
     const callback = authCallback;
@@ -170,5 +163,4 @@ console.debug("Environment variables:", {
 console.debug("Using calendar ID:", Deno.env.get("CALENDAR_ID"));
 
 // Start the server
-console.log(`Starting server on http://localhost:${PORT}`);
-await serve(handleRequest, { port: PORT });
+Deno.serve({ port: PORT }, handleRequest);
