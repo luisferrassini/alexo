@@ -1,6 +1,6 @@
 import { assertEquals, assertExists, assertRejects } from "jsr:@std/assert";
 import { CalendarEventDetails } from "../types/calendar.ts";
-import { parseTextToEvent } from "../utils/eventParser.ts";
+import { parseTextToCreateEvent } from "../utils/eventParser.ts";
 import {
   createCalendarEvent,
   deleteCalendarEvent,
@@ -48,28 +48,28 @@ Deno.test("should handle manual event creation and deletion", async () => {
 
 Deno.test("should parse text input and create event", async () => {
   const textInput = `
-Title: Team Brainstorming
-Location: Virtual Meeting Room
-Description: Quarterly brainstorming session
-Start: 2025-03-03T14:00:00
-End: 2025-03-03T15:30:00
-`;
+  Title: Team Brainstorming
+  Location: Virtual Meeting Room
+  Description: Quarterly brainstorming session
+  Start: 2025-03-03T14:00:00
+  End: 2025-03-03T15:30:00
+  `;
 
-  const parsedEventDetails = parseTextToEvent(textInput);
+  const parsedEventDetails = await parseTextToCreateEvent(textInput);
   assertEquals(parsedEventDetails, {
     summary: "Team Brainstorming",
     location: "Virtual Meeting Room",
     description: "Quarterly brainstorming session",
-    startTime: "2025-03-03T14:00:00",
-    endTime: "2025-03-03T15:30:00",
+    startTime: "2025-03-03T14:00:00-03:00",
+    endTime: "2025-03-03T15:30:00-03:00",
     timeZone: "America/Sao_Paulo",
   });
 
   try {
-    const event = await createCalendarEvent(parsedEventDetails, calendarId);
+    const event = await createCalendarEvent(parsedEventDetails);
     assertExists(event.id);
 
-    await deleteCalendarEvent(event.id, calendarId);
+    await deleteCalendarEvent(event.id);
   } catch (error) {
     console.error(
       "Test failed:",
