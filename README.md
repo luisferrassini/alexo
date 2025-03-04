@@ -2,6 +2,8 @@
 
 A powerful calendar management library for Deno that simplifies working with calendar events. This library provides an easy-to-use interface for creating, deleting, and managing calendar events through voice commands.
 
+![Screenshot from 2025-03-04 09-39-35](https://github.com/user-attachments/assets/6ea27e3e-cc3e-4a4c-8039-8ac5250d56a1)
+
 ## Features
 
 - Voice interface for calendar management
